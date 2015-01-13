@@ -11,13 +11,7 @@
 * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-int main(int argc, char *argv[]){
-
-  //Intialise MPI
-  if(MPI_Init(&argc, &argv) != MPI_SUCCESS){
-    return 1;
-  }
-
+double run_main(){
   int comm_size, comm_rank, data, i;
   double end_time, start_time;
 
@@ -40,10 +34,28 @@ int main(int argc, char *argv[]){
 
   end_time = MPI_Wtime();
 
-  if(comm_rank == 0){
-    printf("%f", end_time - start_time);
+  return end_time - start_time;
+}
+
+int main(int argc, char *argv[]){
+
+  //Intialise MPI
+  if(MPI_Init(&argc, &argv) != MPI_SUCCESS){
+    return 1;
   }
 
+  int i, j, num = 100;
+  double count = 0;
+
+  MPI_Comm_rank(MPI_COMM_WORLD, &j);
+
+  for(i = 0; i < num; i++){
+    count += (run_main() / num);
+  }
+
+  if(j == 0){
+    printf("%f", count);
+  }
 
   //Finalise MPI
   if(MPI_Finalize() != MPI_SUCCESS){
