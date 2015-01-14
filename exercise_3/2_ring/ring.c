@@ -18,32 +18,18 @@ int main(int argc, char *argv[]){
     return 1;
   }
 
-  int comm_rank, comm_size, comm_next, comm_prev, count;
-  MPI_Status status;
+  int comm_rank;
 
   //get the variables.
-  MPI_Comm_size(MPI_COMM_WORLD, &comm_size);
   MPI_Comm_rank(MPI_COMM_WORLD, &comm_rank);
 
-  comm_next = comm_rank + 1;
-  comm_prev = comm_rank - 1;
+  int dataSend[1] = {comm_rank};
+  int dataReceive[1];
 
-  int sum = 0;
+  MPI_Scan(dataSend, dataReceive, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 
-  //Receive from the next one, then send to the previous one.
-
-  if(comm_rank != 0){
-    //receive the sum from the previous one 
-    MPI_Recv(&sum, 1, MPI_INT, comm_prev, 0, MPI_COMM_WORLD, &status);
-  }
-
-  sum += comm_rank;
-  printf("Partial sum: %d (in process %d)\n", sum, comm_rank);
-
-  if(comm_rank != comm_size - 1){
-    //send the partial sum you have to the next one.
-    MPI_Ssend(&sum, 1, MPI_INT, comm_next, 0, MPI_COMM_WORLD);
-  }
+  //this is certainly ordered because of the way MPI_Scan works. 
+  printf("Count %d (in process %d)!\n", dataReceive[0], comm_rank);
 
 
   //Finalise MPI
