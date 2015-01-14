@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <mpi.h>
+#define FALSE 0
+#define TRUE !(FALSE)
 
 /*
 * Copyright (c) 2015 Tom Wiesing
@@ -33,6 +35,16 @@ void create_IntAndFloat_type(struct IntAndFloat *instance, MPI_Datatype *MPI_Int
   MPI_Type_create_struct(2, MPI_Intandfloat_counts, MPI_Intandfloat_offsets, MPI_Intandfloat_types, MPI_Intandfloat);
 }
 
+void IFAdd(struct IntAndFloat *in, struct IntAndFloat *inout, int *len, MPI_Datatype the_type){
+  int i;
+
+  for(i = 0; i< *len; i++ ){
+    inout[i].integer = in[i].integer + inout[i].integer;
+    inout[i].floating = in[i].floating + inout[i].floating;
+  }
+}
+
+
 int main(int argc, char *argv[]){
 
   //Intialise MPI
@@ -44,6 +56,7 @@ int main(int argc, char *argv[]){
 
   MPI_Request request;
   MPI_Status status;
+  MPI_Op my_add;
 
   //get the variables.
   MPI_Comm_size(MPI_COMM_WORLD, &comm_size);
@@ -63,32 +76,20 @@ int main(int argc, char *argv[]){
   create_IntAndFloat_type(&count, &MPI_Intandfloat);
   MPI_Type_commit(&MPI_Intandfloat);
 
+  MPI_Op_create((MPI_User_function *) IFAdd, TRUE, &my_add);
+
   //what we need to receive and send.
-  struct IntAndFloat dataSend[1];
-  struct IntAndFloat dataReceive[1];
+  struct IntAndFloat dataSend;
 
-  dataSend[0].integer = comm_rank;
-  dataSend[0].floating = (float) comm_rank;
+  dataSend.integer = comm_rank;
+  dataSend.floating = (float) comm_rank;
 
-  dataReceive[0].integer = -1;
-  dataReceive[0].floating = -1.0;
+  MPI_Reduce(&dataSend, &count, 1, MPI_Intandfloat, my_add, 0, MPI_COMM_WORLD);
 
-
-  while(dataReceive[0].integer != comm_rank){
-
-    //send and receive
-    MPI_Sendrecv(dataSend, 1, MPI_Intandfloat, comm_next, 0, dataReceive, 1, MPI_Intandfloat, comm_prev, 0, MPI_COMM_WORLD, &status);
-
-    //we want to send the next data value.
-    dataSend[0].integer = dataReceive[0].integer;
-    dataSend[0].floating = dataReceive[0].floating;
-
-    //add to the counter
-    count.integer = count.integer + dataSend[0].integer;
-    count.floating = count.floating + dataSend[0].floating;
+  //print the output
+  if(comm_rank == 0){
+    printf("Count %d, %f (in process %d)!\n", count.integer, count.floating, comm_rank);
   }
-
-  printf("Count %d, %f (in process %d)!\n", count.integer, count.floating, comm_rank);
 
   //Finalise MPI
   if(MPI_Finalize() != MPI_SUCCESS){
