@@ -12,43 +12,48 @@
 */
 
 
-int runMPImaster(int size, int num_procs){
-
+int runMPImaster(int size, int num_procs, int repeats){
+  double time = 0; 
+  int i, j; 
   double data[size];
   MPI_Status receiver_status;
   double start_time, end_time;
+  
+  for(j = 0; j < repeats; j++){
+    //intialise zeros to send.
+    int i;
+    for(i = 0; i < size; i++){
+      data[i] = 0;
+    }
 
-  //intialise zeros to send.
-  int i;
-  for(i = 0; i < size; i++){
-    data[i] = 0;
+    start_time = MPI_Wtime();
+
+    //send the things.
+    for(i = 1;i < num_procs;i++){
+      MPI_Ssend(&data, size, MPI_DOUBLE, i, 0, MPI_COMM_WORLD);
+      MPI_Recv(&data, size, MPI_DOUBLE, i, 1, MPI_COMM_WORLD, &receiver_status);
+    }  
+
+    //end time and output.
+    end_time = MPI_Wtime();
+    time = time + (end_time - start_time)/repeats; 
   }
 
-  start_time = MPI_Wtime();
-
-  //send the things.
-  for(i = 1;i < num_procs;i++){
-    MPI_Ssend(&data, size, MPI_DOUBLE, i, 0, MPI_COMM_WORLD);
-    MPI_Recv(&data, size, MPI_DOUBLE, i, 1, MPI_COMM_WORLD, &receiver_status);
-  }
-
-  //end time and output.
-  end_time = MPI_Wtime();
-
-  printf("%2d, %.6f\n", num_procs, end_time - start_time);
+  printf("%2d, %.6f\n", num_procs, time);
 
   return 0;
 }
 
-int runMPIslave(int size, int num_procs){
+int runMPIslave(int size, int num_procs, int repeats){
   //declare a few variables
   double data[size];
   MPI_Status receiver_status;
-
-  //Receive the data and send it back.
-  MPI_Recv(&data, size, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, &receiver_status);
-  MPI_Ssend(&data, size, MPI_DOUBLE, 0, 1, MPI_COMM_WORLD);
-
+  int j; 
+  for(j = 0; j < repeats; j++){
+    //Receive the data and send it back.
+    MPI_Recv(&data, size, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, &receiver_status);
+    MPI_Ssend(&data, size, MPI_DOUBLE, 0, 1, MPI_COMM_WORLD);
+  }
 
   return 0;
 }
@@ -65,10 +70,12 @@ int startMPI(){
     return 1;
   }
 
+  int repeats = 100; 
+
   if(comm_rank == 0){
-    return runMPImaster(size, comm_size);
+    return runMPImaster(size, comm_size, repeats);
   } else {
-    return runMPIslave(size, comm_size);
+    return runMPIslave(size, comm_size, repeats);
   }
   
 }

@@ -1,11 +1,7 @@
 #!/bin/bash
 
 # Make the data
-echo "num_procs, transfer_time" > dest/tmp.csv
-for i in `seq 2 20`;
-do
-  mpirun -np $i dest/p2p >> dest/tmp.csv
-done
+./data.sh > dest/tmp.csv
 
 # And run the plot
 python -c "

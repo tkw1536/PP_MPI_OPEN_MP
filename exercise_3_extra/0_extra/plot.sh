@@ -1,11 +1,7 @@
 #!/bin/bash
 
 # Make the data
-echo "num_procs, bcast_gather_time" > dest/tmp.csv
-for i in `seq 2 20`;
-do
-  echo "$i, $(mpirun -np $i dest/extra)">> dest/tmp.csv
-done
+./data.sh > dest/tmp.csv
 
 # And run the plot
 python -c "
