@@ -1,3 +1,3 @@
 all: pingpong.c
 	mkdir -p dest
-	mpicc -o dest/pingpong pingpong.c
+	gcc $(shell mpicc --showme:link) -o dest/pingpong pingpong.c

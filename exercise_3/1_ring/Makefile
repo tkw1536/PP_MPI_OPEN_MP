@@ -1,3 +1,3 @@
 all: ring.c
 	mkdir -p dest
-	mpicc -o dest/ring ring.c
+	gcc $(shell mpicc --showme:link) -o dest/ring ring.c

@@ -1,3 +1,3 @@
 all: extra.c
 	mkdir -p dest
-	mpicc -o dest/extra extra.c
+	gcc $(shell mpicc --showme:link) -o dest/extra extra.c

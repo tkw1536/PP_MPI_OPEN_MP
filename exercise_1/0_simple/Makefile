@@ -1,3 +1,3 @@
 all: simple.c
 	mkdir -p dest
-	mpicc -o dest/simple simple.c
+	gcc $(shell mpicc --showme:link) -o dest/simple simple.c
