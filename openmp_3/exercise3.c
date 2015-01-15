@@ -20,7 +20,7 @@ void topol(double s[][3], double *q)
   siga = 0.0;
   for (idr = 0; idr <= ndr/2; idr += ndr/2) {
 
-      //we can not parallelise the outer loop because we need all s1 results in the final loop. 
+      //we can not parallelise the outer loop because we need all s1 results in the final loop.
 
       #pragma omp parallel for
       for (n = 1; n < ndr/2; n++) {
@@ -46,6 +46,7 @@ void topol(double s[][3], double *q)
       /*****   cc = 1 + s1*s2 + s2*s3 + s3*s1   *****/
       /*****   ss = s1 * ( s2 x s3 )            *****/
       #pragma omp parallel for      \
+        shared(s1, s2, s3) \
         private(cc1,cc2,cc3,cc,ss1,ss2,ss3,ss) \
         reduction(+:siga)
       for (is = 1; is < ndr/2; is++) {
